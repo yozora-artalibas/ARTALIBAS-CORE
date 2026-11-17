@@ -1,0 +1,22 @@
+{
+  "appId": "id.yonif942.artalibas",
+  "appName": "ARTALIBAS CORE 942",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#0b141a",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "backgroundColor": "#0b141a",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#111b21",
+      "overlaysWebView": false
+    }
+  }
+}
