@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.netlify.yozora_artalibas.twa",
+      "sha256_cert_fingerprints": [
+        "1B:49:CE:E1:6A:DC:77:FE:27:03:78:B8:D8:24:0F:CA:0E:6B:84:14:11:25:AB:4E:C4:7A:09:E3:07:6E:12:6E"
+      ]
+    }
+  }
+]
