@@ -77,30 +77,36 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
   return (
     <div className="w-full px-4 py-4 space-y-4">
       {/* Header Summary Card */}
-      <div className="bg-[#111b21] border border-[#2a3942] rounded-2xl p-4 space-y-3.5">
+      <div className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl p-4 space-y-3.5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#00a884]/15 border border-[#00a884]/30 flex items-center justify-center shrink-0">
-            <FolderPlus className="w-5 h-5 text-[#00a884]" />
+          <div
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--wa-accent) 16%, transparent)',
+              borderColor: 'color-mix(in srgb, var(--wa-accent) 30%, transparent)',
+            }}
+            className="w-10 h-10 rounded-full border flex items-center justify-center shrink-0"
+          >
+            <FolderPlus className="w-5 h-5 text-[var(--wa-accent)]" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[16px] font-bold text-[#e9edef] leading-tight">
+            <h2 className="text-[16px] font-bold text-[var(--wa-text)] leading-tight">
               Kelola Paten &amp; Sub Keterangan
             </h2>
-            <p className="text-[12px] text-[#8696a0] mt-0.5">
+            <p className="text-[12px] text-[var(--wa-muted)] mt-0.5">
               Tersinkron otomatis dengan Ubah Keterangan Apel
             </p>
           </div>
         </div>
 
         {/* Segmented Inner Tab Switcher */}
-        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[#0b141a] border border-[#202c33]">
+        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)]">
           <button
             type="button"
             onClick={() => setInnerTab('paten')}
             className={`min-h-[44px] px-2 py-2 rounded-lg text-[12px] font-bold transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
               innerTab === 'paten'
-                ? 'bg-[#202c33] text-[#00a884] border border-[#2a3942]'
-                : 'text-[#8696a0] hover:text-[#e9edef]'
+                ? 'bg-[var(--wa-card)] text-[var(--wa-accent)] border border-[var(--wa-border)]'
+                : 'text-[var(--wa-muted)] hover:text-[var(--wa-text)]'
             }`}
           >
             <Shield className="w-3.5 h-3.5 shrink-0" />
@@ -111,8 +117,8 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
             onClick={() => setInnerTab('subket')}
             className={`min-h-[44px] px-2 py-2 rounded-lg text-[12px] font-bold transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
               innerTab === 'subket'
-                ? 'bg-[#202c33] text-[#00a884] border border-[#2a3942]'
-                : 'text-[#8696a0] hover:text-[#e9edef]'
+                ? 'bg-[var(--wa-card)] text-[var(--wa-accent)] border border-[var(--wa-border)]'
+                : 'text-[var(--wa-muted)] hover:text-[var(--wa-text)]'
             }`}
           >
             <Tag className="w-3.5 h-3.5 shrink-0" />
@@ -125,10 +131,10 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
       {innerTab === 'paten' && (
         <div className="space-y-4">
           {!isAdmin && (
-            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[12px] flex items-start gap-2.5">
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[12px] flex items-start gap-2.5">
               <Shield className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
               <span className="leading-relaxed">
-                Mode Baca (User): Hanya Administrator Utama &amp; Admin yang berhak menambah, mengubah, atau menghapus Keterangan Paten Organik.
+                Mode Baca: Hanya pengelola yang dapat mengubah Keterangan Paten Organik.
               </span>
             </div>
           )}
@@ -136,9 +142,9 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
           {isAdmin && (
             <form
               onSubmit={handleSubmitNewCat}
-              className="bg-[#111b21] border border-[#2a3942] rounded-2xl p-4 space-y-2.5"
+              className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl p-4 space-y-2.5"
             >
-              <label className="block text-[12px] font-semibold text-[#e9edef]">
+              <label className="block text-[12px] font-semibold text-[var(--wa-text)]">
                 Tambah Keterangan Paten / Seksi Baru
               </label>
               <div className="flex items-center gap-2">
@@ -149,11 +155,11 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                   onChange={(e) => setNewCat(e.target.value)}
                   placeholder="Contoh: TON PAL, SATUAN KAWAL"
                   aria-label="Tambah keterangan paten baru"
-                  className="flex-1 min-w-0 min-h-[44px] px-3 py-2 rounded-xl bg-[#202c33] border border-[#2a3942] text-[13px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none focus:ring-2 focus:ring-[#00a884] uppercase font-mono"
+                  className="flex-1 min-w-0 min-h-[44px] px-3 py-2 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)] text-[13px] text-[var(--wa-text)] placeholder-[var(--wa-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--wa-accent)] uppercase font-mono"
                 />
                 <button
                   type="submit"
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-[13px] font-bold text-[#0b141a] bg-[#00a884] hover:bg-[#00bf96] transition-colors shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-[13px] font-bold text-[var(--wa-accent-text)] bg-[var(--wa-accent)] hover:opacity-95 transition-colors shrink-0 cursor-pointer"
                 >
                   Tambah
                 </button>
@@ -161,16 +167,16 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
             </form>
           )}
 
-          <div className="bg-[#111b21] border border-[#2a3942] rounded-2xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#202c33] flex items-center justify-between gap-2">
-              <h3 className="text-[13px] font-bold text-[#e9edef] uppercase tracking-wide whitespace-nowrap">
+          <div className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--wa-border)] flex items-center justify-between gap-2">
+              <h3 className="text-[13px] font-bold text-[var(--wa-text)] uppercase tracking-wide whitespace-nowrap">
                 Daftar Paten ({filteredCategories.length})
               </h3>
-              <span className="text-[11px] text-[#8696a0] whitespace-nowrap shrink-0">
-                {isAdmin ? 'Admin: Ubah & Hapus' : 'Mode Baca'}
+              <span className="text-[11px] text-[var(--wa-muted)] whitespace-nowrap shrink-0">
+                {isAdmin ? 'Ubah & Hapus' : 'Mode Baca'}
               </span>
             </div>
-            <div className="divide-y divide-[#202c33]">
+            <div className="divide-y divide-[var(--wa-border)]">
               {filteredCategories.map((cat, idx) => {
                 const isEditing = editingCat === cat;
 
@@ -194,12 +200,12 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                               setEditingCat(null);
                             }
                           }}
-                          className="flex-1 min-w-0 min-h-[40px] px-2.5 py-1 bg-[#202c33] border border-[#00a884] rounded-lg text-[13px] text-[#e9edef] uppercase font-mono focus:outline-none"
+                          className="flex-1 min-w-0 min-h-[40px] px-2.5 py-1 bg-[var(--wa-surface)] border border-[var(--wa-accent)] rounded-lg text-[13px] text-[var(--wa-text)] uppercase font-mono focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => handleSaveEdit(cat)}
-                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[#00a884] text-[#0b141a] hover:bg-[#00bf96] cursor-pointer"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[var(--wa-accent)] text-[var(--wa-accent-text)] hover:opacity-95 cursor-pointer"
                           title="Simpan"
                           aria-label="Simpan perubahan paten"
                         >
@@ -208,7 +214,7 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                         <button
                           type="button"
                           onClick={() => setEditingCat(null)}
-                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[#202c33] text-[#aebac1] hover:bg-[#2a3942] cursor-pointer"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[var(--wa-surface)] text-[var(--wa-muted)] hover:bg-[var(--wa-surface-hover)] cursor-pointer"
                           title="Batal"
                           aria-label="Batal ubah paten"
                         >
@@ -217,10 +223,10 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                       </div>
                     ) : (
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <span className="text-[11px] font-mono text-[#8696a0] w-5 shrink-0 tabular-nums">
+                        <span className="text-[11px] font-mono text-[var(--wa-muted)] w-5 shrink-0 tabular-nums">
                           {idx + 1}.
                         </span>
-                        <span className="text-[13.5px] font-mono font-semibold text-[#e9edef] truncate">
+                        <span className="text-[13.5px] font-mono font-semibold text-[var(--wa-text)] truncate">
                           {cat}
                         </span>
                       </div>
@@ -229,7 +235,11 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                     {!isEditing && isProtectedSiapOps(cat) && (
                       <span
                         title="SIAP OPS tidak dapat diubah nama atau dihapus"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#00a884]/10 border border-[#00a884]/30 text-[11px] font-semibold text-[#00a884] shrink-0"
+                        style={{
+                          backgroundColor: 'color-mix(in srgb, var(--wa-accent) 12%, transparent)',
+                          borderColor: 'color-mix(in srgb, var(--wa-accent) 30%, transparent)',
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-semibold text-[var(--wa-accent)] shrink-0"
                       >
                         <Lock className="w-3 h-3" />
                         <span>Terkunci</span>
@@ -241,7 +251,7 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleStartEdit(cat)}
-                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[#202c33] hover:bg-[#2a3942] text-sky-400 transition-colors cursor-pointer"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[var(--wa-surface)] hover:bg-[var(--wa-surface-hover)] text-sky-400 transition-colors cursor-pointer"
                           title="Ubah nama"
                           aria-label={`Ubah ${cat}`}
                         >
@@ -251,7 +261,7 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                           <button
                             type="button"
                             onClick={() => onRemoveCategory(cat)}
-                            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[#202c33] hover:bg-rose-900/40 text-rose-400 transition-colors cursor-pointer"
+                            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[var(--wa-surface)] hover:bg-rose-900/40 text-rose-400 transition-colors cursor-pointer"
                             title="Hapus kategori paten ini"
                             aria-label={`Hapus ${cat}`}
                           >
@@ -273,9 +283,9 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
         <div className="space-y-4">
           <form
             onSubmit={handleSubmitNewSubKet}
-            className="bg-[#111b21] border border-[#2a3942] rounded-2xl p-4 space-y-2.5"
+            className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl p-4 space-y-2.5"
           >
-            <label className="block text-[12px] font-semibold text-[#e9edef]">
+            <label className="block text-[12px] font-semibold text-[var(--wa-text)]">
               Tambah Sub Keterangan Apel Baru
             </label>
             <div className="flex items-center gap-2">
@@ -286,45 +296,49 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                 onChange={(e) => setNewSubKet(e.target.value)}
                 placeholder="Contoh: PIKET YON, KORVE GUDANG"
                 aria-label="Tambah sub keterangan apel baru"
-                className="flex-1 min-w-0 min-h-[44px] px-3 py-2 rounded-xl bg-[#202c33] border border-[#2a3942] text-[13px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none focus:ring-2 focus:ring-[#00a884] uppercase font-mono"
+                className="flex-1 min-w-0 min-h-[44px] px-3 py-2 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)] text-[13px] text-[var(--wa-text)] placeholder-[var(--wa-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--wa-accent)] uppercase font-mono"
               />
               <button
                 type="submit"
-                className="min-h-[44px] px-4 py-2 rounded-xl text-[13px] font-bold text-[#0b141a] bg-[#00a884] hover:bg-[#00bf96] transition-colors shrink-0 cursor-pointer"
+                className="min-h-[44px] px-4 py-2 rounded-xl text-[13px] font-bold text-[var(--wa-accent-text)] bg-[var(--wa-accent)] hover:opacity-95 transition-colors shrink-0 cursor-pointer"
               >
                 Tambah
               </button>
             </div>
-            <p className="text-[11px] text-[#00a884]">
+            <p className="text-[11px] text-[var(--wa-accent)]">
               Hapus sub ket → personel otomatis masuk ke SIAP OPS
             </p>
           </form>
 
-          <div className="bg-[#111b21] border border-[#2a3942] rounded-2xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-[#202c33] flex items-center justify-between gap-2">
-              <h3 className="text-[13px] font-bold text-[#e9edef] uppercase tracking-wide">
+          <div className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-[var(--wa-border)] flex items-center justify-between gap-2">
+              <h3 className="text-[13px] font-bold text-[var(--wa-text)] uppercase tracking-wide">
                 Daftar Sub Keterangan ({filteredSubKetList.length})
               </h3>
-              <span className="text-[11px] text-[#8696a0]">Urutan Baku</span>
+              <span className="text-[11px] text-[var(--wa-muted)]">Urutan Baku</span>
             </div>
-            <div className="divide-y divide-[#202c33]">
+            <div className="divide-y divide-[var(--wa-border)]">
               {filteredSubKetList.map((sk, idx) => (
                 <div
                   key={sk}
                   className="flex items-center justify-between gap-2 px-4 py-2.5 min-h-[52px]"
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="text-[11px] font-mono text-[#8696a0] w-5 shrink-0 tabular-nums">
+                    <span className="text-[11px] font-mono text-[var(--wa-muted)] w-5 shrink-0 tabular-nums">
                       {idx + 1}.
                     </span>
-                    <span className="text-[13.5px] font-mono font-semibold text-[#e9edef] truncate">
+                    <span className="text-[13.5px] font-mono font-semibold text-[var(--wa-text)] truncate">
                       {sk}
                     </span>
                   </div>
                   {isProtectedSiapOps(sk) ? (
                     <span
                       title="SIAP OPS tidak dapat diubah nama atau dihapus"
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#00a884]/10 border border-[#00a884]/30 text-[11px] font-semibold text-[#00a884] shrink-0"
+                      style={{
+                        backgroundColor: 'color-mix(in srgb, var(--wa-accent) 12%, transparent)',
+                        borderColor: 'color-mix(in srgb, var(--wa-accent) 30%, transparent)',
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-semibold text-[var(--wa-accent)] shrink-0"
                     >
                       <Lock className="w-3 h-3" />
                       <span>Terkunci</span>
@@ -334,7 +348,7 @@ export const CategoryTabView: React.FC<CategoryTabViewProps> = ({
                       <button
                         type="button"
                         onClick={() => onRemoveSubKet(sk)}
-                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[#202c33] hover:bg-rose-900/40 text-rose-400 transition-colors shrink-0 cursor-pointer"
+                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg bg-[var(--wa-surface)] hover:bg-rose-900/40 text-rose-400 transition-colors shrink-0 cursor-pointer"
                         title="Hapus sub keterangan ini"
                         aria-label={`Hapus sub keterangan ${sk}`}
                       >

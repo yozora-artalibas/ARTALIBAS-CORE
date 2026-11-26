@@ -51,9 +51,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <nav
       aria-label="Navigasi Utama"
-      className="shrink-0 z-40 bg-[#111b21] border-t border-[#2a3942] pb-safe"
+      className="shrink-0 z-40 bg-[var(--wa-card)] border-t border-[var(--wa-border)] pb-safe transition-colors"
     >
-      <div className="grid grid-cols-4 h-[62px]">
+      <div className="grid grid-cols-4 h-[56px]">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -64,13 +64,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               aria-label={tab.ariaLabel || tab.label}
               aria-current={isActive ? 'page' : undefined}
               className={`relative flex flex-col items-center justify-center min-h-[44px] px-1 transition-colors cursor-pointer ${
-                isActive ? 'text-[#00a884]' : 'text-[#8696a0] hover:text-[#e9edef]'
+                isActive
+                  ? 'text-[var(--wa-accent)]'
+                  : 'text-[var(--wa-muted)] hover:text-[var(--wa-text)]'
               }`}
             >
               <div
-                className={`relative px-3.5 py-1 rounded-full transition-colors ${
-                  isActive ? 'bg-[#00a884]/15' : ''
-                }`}
+                className="relative px-3.5 py-1 rounded-full transition-colors"
+                style={isActive ? { backgroundColor: 'color-mix(in srgb, var(--wa-accent) 16%, transparent)' } : undefined}
               >
                 {tab.icon}
                 {tab.badge !== undefined && tab.badge > 0 && tab.id === 'apel' && (
@@ -89,6 +90,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             </button>
           );
         })}
+      </div>
+      <div
+        data-testid="watermark-bottom"
+        className="border-t border-[var(--wa-border)]/45 py-1 px-3 text-center select-none pointer-events-none"
+      >
+        <span className="text-[9.5px] font-bold tracking-[0.14em] uppercase text-[var(--wa-muted)]/85">
+          Artalibas Core YTP 942
+        </span>
       </div>
     </nav>
   );

@@ -85,19 +85,19 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
-      {/* Header & Quick Admin Controls */}
-      <div className="bg-[#111b21] border border-[#2a3942] rounded-2xl p-4 space-y-3">
+      {/* Header & Quick Controls */}
+      <div className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-[16px] font-bold text-[#e9edef]">
+            <h2 className="text-[16px] font-bold text-[var(--wa-text)]">
               Database Personel Paten
             </h2>
-            <p className="text-[12px] text-[#8696a0] tabular-nums">
+            <p className="text-[12px] text-[var(--wa-muted)] tabular-nums">
               {personnelList.length} personel organik terdaftar
             </p>
           </div>
           {!isAdmin && (
-            <span className="text-[11px] text-amber-300 inline-flex items-center gap-1 shrink-0">
+            <span className="text-[11px] text-amber-400 inline-flex items-center gap-1 shrink-0">
               <Shield className="w-3.5 h-3.5" />
               <span>Mode Baca</span>
             </span>
@@ -110,7 +110,7 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
             <button
               type="button"
               onClick={onApplyDatabaseToApel}
-              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[#00a884] hover:bg-[#00bf96] text-[#0b141a] text-[13px] font-bold inline-flex items-center gap-2 cursor-pointer"
+              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[var(--wa-accent)] hover:opacity-95 text-[var(--wa-accent-text)] text-[13px] font-bold inline-flex items-center gap-2 cursor-pointer"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Terapkan ke Apel</span>
@@ -120,9 +120,9 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
             <button
               type="button"
               onClick={onOpenAddPersonnel}
-              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[#202c33] hover:bg-[#2a3942] text-[#e9edef] text-[13px] font-semibold inline-flex items-center gap-2 cursor-pointer"
+              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[var(--wa-surface)] hover:bg-[var(--wa-surface-hover)] text-[var(--wa-text)] text-[13px] font-semibold inline-flex items-center gap-2 cursor-pointer"
             >
-              <UserPlus className="w-4 h-4 text-[#00a884]" />
+              <UserPlus className="w-4 h-4 text-[var(--wa-accent)]" />
               <span>Tambah Personel</span>
             </button>
           )}
@@ -130,9 +130,9 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
             <button
               type="button"
               onClick={onOpenGoogleSheetsModal}
-              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[#202c33] hover:bg-[#2a3942] text-[#e9edef] text-[13px] font-semibold inline-flex items-center gap-2 cursor-pointer"
+              className="min-h-[42px] px-3.5 py-2 rounded-xl bg-[var(--wa-surface)] hover:bg-[var(--wa-surface-hover)] text-[var(--wa-text)] text-[13px] font-semibold inline-flex items-center gap-2 cursor-pointer"
             >
-              <FileSpreadsheet className="w-4 h-4 text-[#00a884]" />
+              <FileSpreadsheet className="w-4 h-4 text-[var(--wa-accent)]" />
               <span>
                 Google Sheets{autoSyncEnabled && isGoogleConnected ? ' (Aktif)' : ''}
               </span>
@@ -142,20 +142,20 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
 
         {/* Search Input */}
         <div className="relative">
-          <Search className="w-4 h-4 text-[#8696a0] absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--wa-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama, pangkat, atau paten..."
-            className="w-full min-h-[42px] pl-10 pr-9 py-2 rounded-xl bg-[#202c33] text-[14px] text-[#e9edef] placeholder-[#8696a0] focus:outline-none focus:ring-1 focus:ring-[#00a884]"
+            className="w-full min-h-[42px] pl-10 pr-9 py-2 rounded-xl bg-[var(--wa-surface)] text-[14px] text-[var(--wa-text)] placeholder-[var(--wa-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--wa-accent)]"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
               aria-label="Hapus pencarian database"
-              className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] flex items-center justify-center text-[#8696a0] hover:text-white cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[36px] min-h-[36px] flex items-center justify-center text-[var(--wa-muted)] hover:text-[var(--wa-text)] cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -164,9 +164,9 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
       </div>
 
       {/* Personnel Patent List */}
-      <div className="bg-[#111b21] border border-[#2a3942] rounded-2xl overflow-hidden divide-y divide-[#202c33]">
+      <div className="bg-[var(--wa-card)]/95 border border-[var(--wa-border)] rounded-2xl overflow-hidden divide-y divide-[var(--wa-border)]">
         {filtered.length === 0 ? (
-          <div className="py-12 text-center text-[13px] text-[#8696a0]">
+          <div className="py-12 text-center text-[13px] text-[var(--wa-muted)]">
             Tidak ada data personel paten yang cocok.
           </div>
         ) : (
@@ -176,19 +176,22 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
             return (
               <div
                 key={person.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-[#202c33]/50 transition-colors"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--wa-surface)]/50 transition-colors"
               >
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${avatarClasses}`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 bg-[#111b21] ${avatarClasses}`}
                 >
                   {shortRank}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[14px] font-semibold text-[#e9edef] truncate">
+                  <div className="text-[14px] font-semibold text-[var(--wa-text)] truncate">
                     {person.pangkat} {person.nama}
                   </div>
-                  <div className="text-[12px] text-[#8696a0] truncate tabular-nums">
-                    #{idx + 1} · Paten: <span className="text-[#00a884] font-medium">{person.keterangan_paten}</span>
+                  <div className="text-[12px] text-[var(--wa-muted)] truncate tabular-nums">
+                    #{idx + 1} · Paten:{' '}
+                    <span className="text-[var(--wa-accent)] font-medium">
+                      {person.keterangan_paten}
+                    </span>
                   </div>
                 </div>
                 {isAdmin && (
@@ -197,7 +200,7 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                       type="button"
                       onClick={() => openEditor(person)}
                       aria-label={`Edit paten ${person.nama}`}
-                      className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[#aebac1] hover:bg-[#202c33] hover:text-white cursor-pointer"
+                      className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[var(--wa-muted)] hover:bg-[var(--wa-surface)] hover:text-[var(--wa-text)] cursor-pointer"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -217,7 +220,7 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                         type="button"
                         onClick={() => setConfirmDeleteId(person.id)}
                         aria-label={`Hapus ${person.nama} dari database`}
-                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[#8696a0] hover:bg-rose-500/15 hover:text-rose-400 cursor-pointer"
+                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[var(--wa-muted)] hover:bg-rose-500/15 hover:text-rose-400 cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -230,25 +233,23 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
         )}
       </div>
 
-      {/* Edit Patent Bottom Sheet (Admin Only) */}
+      {/* Edit Patent Bottom Sheet */}
       {editingPerson && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-xs"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-xs"
           onClick={() => setEditingPerson(null)}
         >
           <div
-            className="w-full sm:max-w-md bg-[#111b21] border-t sm:border border-[#2a3942] rounded-t-3xl sm:rounded-2xl p-5 space-y-4 shadow-2xl"
+            className="w-full max-w-[440px] bg-[var(--wa-card)] text-[var(--wa-text)] border-t border-x border-[var(--wa-border)] rounded-t-3xl p-5 space-y-4 shadow-2xl pb-safe"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-[16px] font-bold text-[#e9edef]">
-                Edit Data Paten Personel
-              </h3>
+              <h3 className="text-[16px] font-bold">Edit Data Paten Personel</h3>
               <button
                 type="button"
                 onClick={() => setEditingPerson(null)}
                 aria-label="Tutup Editor Paten"
-                className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[#8696a0] hover:bg-[#202c33]"
+                className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-[var(--wa-muted)] hover:bg-[var(--wa-surface)]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -256,7 +257,7 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
 
             <form onSubmit={handleSave} className="space-y-3.5">
               <div>
-                <label className="block text-[12px] font-semibold text-[#8696a0] mb-1">
+                <label className="block text-[12px] font-semibold text-[var(--wa-muted)] mb-1">
                   Pangkat
                 </label>
                 <input
@@ -264,12 +265,12 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                   required
                   value={editPangkat}
                   onChange={(e) => setEditPangkat(e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#202c33] border border-[#2a3942] text-[14px] text-[#e9edef] focus:outline-none focus:border-[#00a884]"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)] text-[14px] text-[var(--wa-text)] focus:outline-none focus:border-[var(--wa-accent)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold text-[#8696a0] mb-1">
+                <label className="block text-[12px] font-semibold text-[var(--wa-muted)] mb-1">
                   Nama Personel
                 </label>
                 <input
@@ -277,13 +278,13 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                   required
                   value={editNama}
                   onChange={(e) => setEditNama(e.target.value)}
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#202c33] border border-[#2a3942] text-[14px] text-[#e9edef] focus:outline-none focus:border-[#00a884]"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)] text-[14px] text-[var(--wa-text)] focus:outline-none focus:border-[var(--wa-accent)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold text-[#8696a0] mb-1.5">
-                  Keterangan Paten Organik (Sinkron Apel & Sub Ket)
+                <label className="block text-[12px] font-semibold text-[var(--wa-muted)] mb-1.5">
+                  Keterangan Paten Organik (Sinkron Apel &amp; Sub Ket)
                 </label>
                 <div className="max-h-44 overflow-y-auto flex flex-wrap gap-1.5 mb-2.5 pr-0.5">
                   {syncedPresets
@@ -297,8 +298,8 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                           onClick={() => setEditPaten(preset.subKet)}
                           className={`min-h-[38px] max-w-full px-3 py-1.5 rounded-lg text-[12px] font-semibold text-left inline-flex items-center justify-between gap-1.5 transition-colors cursor-pointer ${
                             isActive
-                              ? 'bg-[#00a884] text-[#0b141a]'
-                              : 'bg-[#202c33] text-[#e9edef] hover:bg-[#2a3942]'
+                              ? 'bg-[var(--wa-accent)] text-[var(--wa-accent-text)]'
+                              : 'bg-[var(--wa-surface)] text-[var(--wa-text)] hover:bg-[var(--wa-surface-hover)]'
                           }`}
                         >
                           <span className="whitespace-normal break-words leading-snug">{preset.label}</span>
@@ -314,7 +315,7 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                   value={editPaten}
                   onChange={(e) => setEditPaten(e.target.value.toUpperCase())}
                   placeholder="Atau ketik keterangan paten..."
-                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[#202c33] border border-[#2a3942] text-[14px] text-[#e9edef] placeholder-[#8696a0] placeholder:normal-case uppercase font-mono focus:outline-none focus:border-[#00a884]"
+                  className="w-full min-h-[44px] px-3.5 py-2 rounded-xl bg-[var(--wa-surface)] border border-[var(--wa-border)] text-[14px] text-[var(--wa-text)] placeholder-[var(--wa-muted)] placeholder:normal-case uppercase font-mono focus:outline-none focus:border-[var(--wa-accent)]"
                 />
                 <datalist id="db-tab-paten-list">
                   {syncedPresets
@@ -335,13 +336,13 @@ export const DatabaseTabView: React.FC<DatabaseTabViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setEditingPerson(null)}
-                  className="min-h-[44px] px-4 rounded-xl bg-[#202c33] text-[#e9edef] text-[14px] font-medium cursor-pointer"
+                  className="min-h-[44px] px-4 rounded-xl bg-[var(--wa-surface)] text-[var(--wa-text)] text-[14px] font-medium cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 min-h-[44px] px-4 rounded-xl bg-[#00a884] hover:bg-[#00bf96] text-[#0b141a] text-[14px] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="flex-1 min-h-[44px] px-4 rounded-xl bg-[var(--wa-accent)] hover:opacity-95 text-[var(--wa-accent-text)] text-[14px] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                   <span>Simpan Perubahan</span>

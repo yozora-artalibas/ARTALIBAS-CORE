@@ -28,14 +28,14 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
   const namesList = duplicates.map((d) => d.nama).join(', ');
 
   return (
-    <div className="bg-[#202c33] border-b border-[#2a3942] px-4 py-3">
+    <div className="bg-[var(--wa-surface)] border-b border-[var(--wa-border)] px-4 py-3">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-start gap-2.5 min-w-0">
           <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-[13px] text-[#e9edef] leading-snug">
+          <p className="text-[13px] text-[var(--wa-text)] leading-snug">
             {hasDuplicates ? (
               <>
-                Ditemukan <strong className="text-amber-300">{duplicates.length} nama ganda</strong> ({namesList}).
+                Ditemukan <strong className="text-amber-400">{duplicates.length} nama ganda</strong> ({namesList}).
               </>
             ) : (
               'Ditemukan personel dengan penugasan belum dialokasikan.'
@@ -54,7 +54,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
           <button
             type="button"
             onClick={onOpenDuplicateModal}
-            className="min-h-[36px] px-3 py-1 rounded-lg bg-[#111b21] hover:bg-[#182229] text-[#e9edef] text-[12px] font-medium cursor-pointer"
+            className="min-h-[36px] px-3 py-1 rounded-lg bg-[var(--wa-card)] hover:bg-[var(--wa-surface-hover)] text-[var(--wa-text)] text-[12px] font-medium cursor-pointer"
           >
             Detail
           </button>
@@ -63,7 +63,7 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
               type="button"
               onClick={onDismiss}
               aria-label="Tutup Peringatan"
-              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full text-[#8696a0] hover:text-white cursor-pointer"
+              className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full text-[var(--wa-muted)] hover:text-[var(--wa-text)] cursor-pointer"
             >
               <X className="h-4 w-4" />
             </button>

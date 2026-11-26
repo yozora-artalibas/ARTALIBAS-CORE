@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   INITIAL_PERSONNEL_DATABASE,
   INITIAL_KETERANGAN_PATEN_LIST,
@@ -9,7 +9,6 @@ import {
   ChangeHistoryEntry,
   ChatMessage,
 } from './types/personnel';
-import { AppUser } from './types/auth';
 import {
   calculateMusterSummary,
   sortPersonnel,
@@ -40,13 +39,18 @@ import {
   saveHistoryToStorage,
 } from './utils/storageManager';
 import {
-  loadActiveSession,
-  saveActiveSession,
-  loadUsersFromStorage,
-  getRoleDisplayName,
-} from './utils/authManager';
-import { LoginForm } from './components/LoginForm';
-import { UserManagementModal } from './components/UserManagementModal';
+  AppearanceSettings,
+  loadAppearanceSettings,
+  saveAppearanceSettings,
+  loadHeaderPhoto,
+  saveHeaderPhoto,
+  loadHeaderSubtitle,
+  saveHeaderSubtitle,
+  getThemeById,
+  getFontById,
+  buildAppearanceCssVars,
+  buildWhatsAppPatternDataUrl,
+} from './utils/appearanceManager';
 import { Header } from './components/Header';
 import { BottomNav, ActiveTab } from './components/BottomNav';
 import { WhatsAppFilterStrip } from './components/WhatsAppFilterStrip';
@@ -64,7 +68,9 @@ import { DuplicateResolverModal } from './components/DuplicateResolverModal';
 import { ExportApelModal } from './components/ExportApelModal';
 import { HistoryModal } from './components/HistoryModal';
 import { GoogleSheetsSyncModal } from './components/GoogleSheetsSyncModal';
-import { PWAInstallModal, OfflineIndicator } from './components/PWAInstallModal';
+import { AppearanceModal } from './components/AppearanceModal';
+import { HeaderPhotoModal } from './components/HeaderPhotoModal';
+import { SplashScreen } from './components/SplashScreen';
 import { User } from 'firebase/auth';
 import {
   initGoogleAuth,
@@ -76,7 +82,7 @@ import {
   hasPersonnelChanges,
   parseSpreadsheetId,
 } from './services/googleSheetsService';
-import { Check, Info, AlertCircle, FileText, ArrowRightLeft, MessageSquareText, PieChart, Database } from 'lucide-react';
+import { Check, Info, AlertCircle, FileText, ArrowRightLeft, WifiOff } from 'lucide-react';
 
 const STORAGE_KEY_GSHEET_URL = 'KIMA_GSHEET_URL_V3';
 const STORAGE_KEY_GSHEET_TAB = 'KIMA_GSHEET_TAB_V3';
@@ -84,10 +90,19 @@ const STORAGE_KEY_GSHEET_AUTOSYNC = 'KIMA_GSHEET_AUTOSYNC_V3';
 const STORAGE_KEY_GSHEET_LAST_SYNC = 'KIMA_GSHEET_LAST_SYNC_V3';
 
 export default function App() {
-  // Authentication & Session
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => loadActiveSession());
-  const [isUserManagementOpen, setIsUserManagementOpen] = useState<boolean>(false);
-  const [usersList, setUsersList] = useState<AppUser[]>(() => loadUsersFromStorage());
+  // Appearance (Theme, Wallpaper, 10 Fonts) & Custom Header Photo
+  const [appearanceSettings, setAppearanceSettings] = useState<AppearanceSettings>(() =>
+    loadAppearanceSettings()
+  );
+  const [headerPhotoUrl, setHeaderPhotoUrl] = useState<string | null>(() => loadHeaderPhoto());
+  const [headerSubtitle, setHeaderSubtitle] = useState<string>(() => loadHeaderSubtitle());
+  const [isAppearanceModalOpen, setIsAppearanceModalOpen] = useState<boolean>(false);
+  const [isHeaderPhotoModalOpen, setIsHeaderPhotoModalOpen] = useState<boolean>(false);
+  const [showSplash, setShowSplash] = useState<boolean>(true);
+  const handleSplashComplete = useCallback(() => setShowSplash(false), []);
+  const [isOnline, setIsOnline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
 
   // Master persistent state - pre-sorted by rank & name automatically on initial load
   const [personnelList, setPersonnelList] = useState<Personnel[]>(() => sortPersonnel(loadPersonnelFromStorage()));
@@ -131,7 +146,6 @@ export default function App() {
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
   const [historySelectedPersonnel, setHistorySelectedPersonnel] = useState<Personnel | null>(null);
-  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   const [alertDismissed, setAlertDismissed] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'warning' } | null>(null);
@@ -141,6 +155,7 @@ export default function App() {
   const [isSelectionMode, setIsSelectionMode] = useState<boolean>(false);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState<boolean>(false);
   const [actionSheetTarget, setActionSheetTarget] = useState<{ person: Personnel; index: number } | null>(null);
+  const [activeSortMode, setActiveSortMode] = useState<'pangkat' | 'keterangan' | null>('pangkat');
 
   // Google Sheets Live Auto-Sync State
   const [googleUser, setGoogleUser] = useState<User | null>(null);
@@ -170,23 +185,44 @@ export default function App() {
     }, 3500);
   };
 
-  const handleLoginSuccess = (user: AppUser) => {
-    setCurrentUser(user);
-    saveActiveSession(user);
-    setPersonnelList((prev) => sortPersonnel(prev));
-    showToast(`Selamat datang, ${user.namaLengkap} (${getRoleDisplayName(user)})!`);
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  const handleUpdateAppearance = (next: AppearanceSettings) => {
+    setAppearanceSettings(next);
+    saveAppearanceSettings(next);
   };
 
-  const handleLogout = () => {
-    saveActiveSession(null);
-    setCurrentUser(null);
-    showToast('Berhasil Log Out.');
+  const handleSaveHeaderPhoto = (dataUrl: string | null) => {
+    setHeaderPhotoUrl(dataUrl);
+    saveHeaderPhoto(dataUrl);
+    showToast(dataUrl ? 'Foto berhasil diperbarui.' : 'Foto dikembalikan ke logo bawaan.');
   };
 
-  // Pending users count for Admin
-  const pendingUserCount = useMemo(() => {
-    return usersList.filter((u) => u.status === 'pending').length;
-  }, [usersList]);
+  const handleSaveHeaderSubtitle = (nextSubtitle: string) => {
+    const saved = saveHeaderSubtitle(nextSubtitle);
+    setHeaderSubtitle(saved);
+    showToast(`Tulisan header diubah menjadi "Keterangan Apel ${saved}".`);
+  };
+
+  const activeTheme = useMemo(() => getThemeById(appearanceSettings.themeId), [appearanceSettings.themeId]);
+  const activeFont = useMemo(() => getFontById(appearanceSettings.fontId), [appearanceSettings.fontId]);
+  const appearanceCssVars = useMemo(() => buildAppearanceCssVars(appearanceSettings), [appearanceSettings]);
+  const patternUrl = useMemo(
+    () =>
+      activeTheme.hasPattern
+        ? buildWhatsAppPatternDataUrl(activeTheme.patternColor, activeTheme.isLight ? 0.55 : 0.45)
+        : 'none',
+    [activeTheme]
+  );
 
   // Muster summary calculation
   const summary = useMemo(() => {
@@ -292,7 +328,7 @@ export default function App() {
     }));
 
     const newLogs: ChangeHistoryEntry[] = [];
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     personnelList.forEach((oldP, idx) => {
       const newP = updated[idx];
       if (
@@ -326,14 +362,16 @@ export default function App() {
   const handleSortPangkatNama = () => {
     const sorted = sortPersonnel(personnelList);
     setPersonnelList(sorted);
-    showToast('Data berhasil diurutkan sesuai Pangkat (Letda -> Prada) dan Nama Abjad.');
+    setActiveSortMode('pangkat');
+    showToast('Data berhasil diubah sesuai Pangkat & Nama');
   };
 
   // Sort Action 2: Urutkan sesuai Keterangan Apel
   const handleSortKeteranganApel = () => {
     const sorted = sortPersonnelByKeteranganApel(personnelList);
     setPersonnelList(sorted);
-    showToast('Data berhasil diurutkan sesuai Keterangan Apel (sesuai hierarki penugasan & tetap sesuai pangkat/nama).');
+    setActiveSortMode('keterangan');
+    showToast('Data berhasil diubah sesuai Keterangan Apel');
   };
 
   // Action: Update Personnel Name
@@ -342,7 +380,7 @@ export default function App() {
     if (!target || target.nama === newName) return;
 
     const oldName = target.nama;
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     const updated = personnelList.map((p) => {
       if (p.id === id) {
         return {
@@ -376,7 +414,7 @@ export default function App() {
 
     const oldPangkat = target.pangkat;
     const newLevel = getRankLevel(newPangkat);
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     const updated = personnelList.map((p) => {
       if (p.id === id) {
         return {
@@ -411,7 +449,7 @@ export default function App() {
 
     const oldSub = target.sub_keterangan_saat_ini;
     const { category, status } = inferCategoryAndStatus(newSubKet);
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     const upperSub = newSubKet.trim().toUpperCase();
     if (upperSub && upperSub !== 'KOSONG' && upperSub !== 'TMMD' && !subKetList.includes(upperSub)) {
       setSubKetList((prev) => [...prev, upperSub]);
@@ -447,11 +485,6 @@ export default function App() {
 
   // Action: Update Personnel Paten
   const handleUpdatePersonnelPaten = (id: number, newPaten: string) => {
-    if (currentUser?.role !== 'admin') {
-      showToast('Akses ditolak: Hanya Administrator Utama & Admin yang berhak merubah database personel paten!', 'warning');
-      return;
-    }
-
     const target = personnelList.find((p) => p.id === id);
     if (!target || target.keterangan_paten === newPaten) return;
 
@@ -466,7 +499,7 @@ export default function App() {
     }
 
     const oldPaten = target.keterangan_paten;
-    const actor = currentUser?.username || 'Admin KIMA';
+    const actor = 'Operator KIMA';
     const updated = personnelList.map((p) => {
       if (p.id === id) {
         return {
@@ -557,7 +590,7 @@ export default function App() {
     setPersonnelList(updated);
 
     if (movedCount > 0) {
-      const actor = currentUser?.username || 'Bamin Kompi';
+      const actor = 'Operator KIMA';
       const movedSet = new Set(movedIds);
       const logs = withUpdatedPaten
         .filter((p) => movedSet.has(p.id))
@@ -598,7 +631,7 @@ export default function App() {
 
     const { updated, movedIds, movedCount } = reassignSubKetToSiapOps(personnelList, targetSub);
     if (movedCount > 0) {
-      const actor = currentUser?.username || 'Bamin Kompi';
+      const actor = 'Operator KIMA';
       const movedSet = new Set(movedIds);
       const logs = personnelList
         .filter((p) => movedSet.has(p.id))
@@ -624,14 +657,11 @@ export default function App() {
   // Action: Save Personnel (Add or Edit)
   const handleSavePersonnel = (person: Personnel) => {
     const existingIndex = personnelList.findIndex((p) => p.id === person.id);
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
 
     if (existingIndex >= 0) {
       const oldPerson = personnelList[existingIndex];
-      // If user is not admin, they cannot modify the patent assignment
-      const safePerson = currentUser?.role !== 'admin'
-        ? { ...person, keterangan_paten: oldPerson.keterangan_paten }
-        : person;
+      const safePerson = person;
 
       const diffLogs = generateDiffHistory(oldPerson, safePerson, actor, 'EDIT_LENGKAP');
 
@@ -647,11 +677,6 @@ export default function App() {
       }
       showToast(`Data personel ${safePerson.pangkat} ${safePerson.nama} berhasil diperbarui.`);
     } else {
-      if (currentUser?.role !== 'admin') {
-        showToast('Akses ditolak: Hanya Administrator Utama & Admin yang berhak menambah personel ke database paten!', 'warning');
-        return;
-      }
-
       const newPersonWithTime = {
         ...person,
         createdAt: new Date().toISOString(),
@@ -677,15 +702,10 @@ export default function App() {
 
   // Action: Delete Personnel
   const handleDeletePersonnel = (id: number) => {
-    if (currentUser?.role !== 'admin') {
-      showToast('Akses ditolak: Hanya Admin yang berhak menghapus personel dari database!', 'warning');
-      return;
-    }
-
     const target = personnelList.find((p) => p.id === id);
     if (!target) return;
 
-    const actor = currentUser?.username || 'Admin KIMA';
+    const actor = 'Operator KIMA';
     const log = createHistoryEntry(
       target,
       'EDIT_LENGKAP',
@@ -707,15 +727,10 @@ export default function App() {
     showToast(`Personel ${target.pangkat} ${target.nama} berhasil dihapus.`);
   };
 
-  // Action: Copy All Current Apel Status to Patent Database (Admin & Administrator Utama only)
+  // Action: Copy All Current Apel Status to Patent Database
   const handleCopyApelToPaten = () => {
-    if (!isAdmin) {
-      showToast('Akses ditolak: Hanya Administrator Utama dan Admin yang berhak memindahkan keterangan apel ke keterangan paten!', 'warning');
-      return;
-    }
-
     const now = new Date().toISOString();
-    const actor = currentUser?.username || 'Admin KIMA';
+    const actor = 'Operator KIMA';
     const newLogs: ChangeHistoryEntry[] = [];
     const newPatenSet = new Set(patentCategories);
 
@@ -908,7 +923,7 @@ export default function App() {
 
     const idSet = new Set(idsToMove);
     const newLogs: ChangeHistoryEntry[] = [];
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
 
     const updated = personnelList.map((p) => {
       if (idSet.has(p.id)) {
@@ -955,7 +970,7 @@ export default function App() {
     if (matches.length === 0) return;
 
     const { category, status } = inferCategoryAndStatus(chosenSubKet);
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     const primaryId = matches[0].id;
 
     const updated = personnelList.map((p) => {
@@ -992,7 +1007,7 @@ export default function App() {
 
     let updated = [...personnelList];
     const newLogs: ChangeHistoryEntry[] = [];
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
 
     duplicates.forEach((dup) => {
       const match = updated.find((p) => p.nama.toLowerCase() === dup.nama.toLowerCase());
@@ -1042,23 +1057,15 @@ export default function App() {
     setIsHistoryModalOpen(true);
   };
 
-  // Action: Delete Single History Entry (Admin only)
+  // Action: Delete Single History Entry
   const handleDeleteHistoryEntry = (id: string) => {
-    if (currentUser?.role !== 'admin') {
-      showToast('Akses ditolak: Hanya Admin yang berhak menghapus log riwayat.', 'warning');
-      return;
-    }
     const filtered = historyEntries.filter((h) => h.id !== id);
     setHistoryEntries(filtered);
     showToast('Catatan log riwayat berhasil dihapus.');
   };
 
-  // Action: Clear All History (Admin only)
+  // Action: Clear All History
   const handleClearAllHistory = () => {
-    if (currentUser?.role !== 'admin') {
-      showToast('Akses ditolak: Hanya Admin yang berhak menghapus log riwayat.', 'warning');
-      return;
-    }
     setHistoryEntries([]);
     showToast('Seluruh catatan log riwayat perubahan berhasil dihapus.');
   };
@@ -1122,7 +1129,7 @@ export default function App() {
           'Perintah Asisten Chatbot',
           '-',
           rawText,
-          currentUser?.username || 'Chatbot KIMA',
+          'Chatbot KIMA',
           result.message
         );
         setHistoryEntries((prev) => [log, ...prev]);
@@ -1160,7 +1167,7 @@ export default function App() {
       setSubKetList((prev) => [...prev, upperSub]);
     }
 
-    const actor = currentUser?.username || 'Bamin Kompi';
+    const actor = 'Operator KIMA';
     const updated = personnelList.map((p) =>
       p.id === personId
         ? {
@@ -1193,12 +1200,7 @@ export default function App() {
     [subKetList, patentCategories]
   );
 
-  // If user is not logged in, show login form
-  if (!currentUser) {
-    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
-  }
-
-  const isAdmin = currentUser.role === 'admin';
+  const isAdmin = true;
 
   const resetAllFilters = () => {
     setSelectedRank('Semua');
@@ -1210,21 +1212,30 @@ export default function App() {
 
   return (
     <div className="h-[100dvh] w-full bg-[#050a0d] flex justify-center overflow-hidden">
-      <div className="relative w-full max-w-[440px] h-full bg-[#0b141a] text-[#e9edef] flex flex-col overflow-hidden md:border-x md:border-[#222e35] md:shadow-2xl font-sans selection:bg-[#00a884] selection:text-[#0b141a]">
+      {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+      <div
+        style={{
+          ...(appearanceCssVars as React.CSSProperties),
+          fontFamily: activeFont.fontFamily,
+          backgroundColor: 'var(--wa-bg)',
+          color: 'var(--wa-text)',
+        }}
+        className="relative w-full max-w-[440px] h-full flex flex-col overflow-hidden md:border-x md:border-[var(--wa-border)] md:shadow-2xl selection:bg-[var(--wa-accent)] selection:text-[var(--wa-accent-text)]"
+      >
         {/* Toast Notification Banner */}
         {toastMessage && (
           <div className="absolute top-16 left-4 right-4 z-50 pointer-events-none">
             <div
-              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl border text-[13px] font-semibold ${
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-2xl border text-[13px] font-semibold bg-[var(--wa-surface)] text-[var(--wa-text)] ${
                 toastMessage.type === 'success'
-                  ? 'bg-[#202c33] text-[#e9edef] border-[#00a884]/60'
+                  ? 'border-[var(--wa-accent)]/60'
                   : toastMessage.type === 'warning'
-                  ? 'bg-[#202c33] text-amber-200 border-amber-500/60'
-                  : 'bg-[#202c33] text-sky-200 border-sky-500/60'
+                  ? 'border-amber-500/60'
+                  : 'border-sky-500/60'
               }`}
             >
               {toastMessage.type === 'success' ? (
-                <Check className="w-4 h-4 text-[#00a884] shrink-0" />
+                <Check className="w-4 h-4 text-[var(--wa-accent)] shrink-0" />
               ) : toastMessage.type === 'warning' ? (
                 <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
               ) : (
@@ -1243,20 +1254,15 @@ export default function App() {
             setHistorySelectedPersonnel(null);
             setIsHistoryModalOpen(true);
           }}
-          onOpenUserManagement={() => setIsUserManagementOpen(true)}
-          onLogout={handleLogout}
-          onSortPangkatNama={handleSortPangkatNama}
-          onSortKeteranganApel={handleSortKeteranganApel}
+          onOpenAppearance={() => setIsAppearanceModalOpen(true)}
+          onOpenHeaderPhoto={() => setIsHeaderPhotoModalOpen(true)}
           onResetAllToPaten={handleResetAllToPaten}
           onOpenAddPersonnel={() => {
             setPersonnelToEdit(null);
             setIsPersonnelModalOpen(true);
           }}
           onCopyApelToPaten={handleCopyApelToPaten}
-          onOpenGoogleSheetsModal={() => {
-            if (isAdmin) setIsGoogleSheetsModalOpen(true);
-          }}
-          onOpenInstallModal={() => setIsInstallModalOpen(true)}
+          onOpenGoogleSheetsModal={() => setIsGoogleSheetsModalOpen(true)}
           isSelectionMode={isSelectionMode}
           onToggleSelectionMode={() => {
             if (isSelectionMode) {
@@ -1274,64 +1280,92 @@ export default function App() {
               setActiveTab('apel');
             }
           }}
-          totalPersonnel={summary.total}
-          hadirCount={summary.hadir}
           hasDuplicates={summary.duplicates.length > 0}
           duplicateCount={summary.duplicates.length}
           totalHistoryCount={historyEntries.length}
-          currentUser={currentUser}
-          pendingUserCount={pendingUserCount}
-          isAdmin={isAdmin}
+          headerPhotoUrl={headerPhotoUrl}
+          headerSubtitle={headerSubtitle}
         />
 
-        {/* Scrollable Native App Content Area */}
-        <main className="flex-1 w-full overflow-y-auto overscroll-y-contain no-scrollbar pb-24">
-          {activeTab === 'apel' && (
-            <div className="w-full">
-              {/* Compact Audit Alert Banner */}
-              <AlertBanner
-                duplicates={summary.duplicates}
-                unaccountedCount={summary.unaccountedCount}
-                onOpenDuplicateModal={() => setIsDuplicateModalOpen(true)}
-                onQuickResolveAll={handleResolveDuplicateAll}
-                dismissed={alertDismissed}
-                onDismiss={() => setAlertDismissed(true)}
-              />
-
-              {/* WhatsApp-style Filter Chips */}
-              <WhatsAppFilterStrip
-                summary={summary}
-                selectedStatus={selectedStatus}
-                onSelectStatus={setSelectedStatus}
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                selectedRank={selectedRank}
-                selectedSubKet={selectedSubKet}
-                searchQuery={searchQuery}
-                totalFiltered={filteredPersonnel.length}
-                totalMaster={personnelList.length}
-                onOpenFilterSheet={() => setIsFilterSheetOpen(true)}
-                onResetFilters={resetAllFilters}
-              />
-
-              {/* Native WhatsApp Mobile Chat List */}
-              <PersonnelChatList
-                personnelList={filteredPersonnel}
-                isSelectionMode={isSelectionMode}
-                selectedIds={selectedIds}
-                onToggleSelect={handleToggleSelect}
-                onToggleSelectAll={handleToggleSelectAll}
-                onCancelSelectionMode={() => {
-                  setIsSelectionMode(false);
-                  setSelectedIds(new Set());
-                }}
-                onSelectPerson={(person, index) => {
-                  const realIndex = personnelList.findIndex((p) => p.id === person.id);
-                  setActionSheetTarget({ person, index: realIndex >= 0 ? realIndex : index });
-                }}
-              />
-            </div>
+        {/* Fixed WhatsApp Wallpaper / Pattern Behind Scrollable Main Content */}
+        <div className="relative flex-1 w-full overflow-hidden flex flex-col">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0"
+            style={{
+              backgroundColor: activeTheme.bg,
+              backgroundImage: appearanceSettings.customWallpaper
+                ? `url(${appearanceSettings.customWallpaper})`
+                : patternUrl,
+              backgroundSize: appearanceSettings.customWallpaper ? 'cover' : '120px 120px',
+              backgroundPosition: 'center',
+              backgroundRepeat: appearanceSettings.customWallpaper ? 'no-repeat' : 'repeat',
+            }}
+          />
+          {appearanceSettings.customWallpaper && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-0"
+              style={{
+                backgroundColor: activeTheme.isLight
+                  ? `rgba(239, 234, 226, ${appearanceSettings.wallpaperDim / 100})`
+                  : `rgba(11, 20, 26, ${appearanceSettings.wallpaperDim / 100})`,
+              }}
+            />
           )}
+
+          {/* Scrollable Native App Content Area */}
+          <main className="relative z-10 flex-1 w-full overflow-y-auto overscroll-y-contain no-scrollbar pb-24">
+            {activeTab === 'apel' && (
+              <div className="w-full">
+                {/* Compact Audit Alert Banner */}
+                <AlertBanner
+                  duplicates={summary.duplicates}
+                  unaccountedCount={summary.unaccountedCount}
+                  onOpenDuplicateModal={() => setIsDuplicateModalOpen(true)}
+                  onQuickResolveAll={handleResolveDuplicateAll}
+                  dismissed={alertDismissed}
+                  onDismiss={() => setAlertDismissed(true)}
+                />
+
+                {/* WhatsApp-style Filter Chips & Symmetrical Yellow/Green Sort Bar */}
+                <WhatsAppFilterStrip
+                  summary={summary}
+                  selectedStatus={selectedStatus}
+                  onSelectStatus={setSelectedStatus}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  selectedRank={selectedRank}
+                  selectedSubKet={selectedSubKet}
+                  searchQuery={searchQuery}
+                  totalFiltered={filteredPersonnel.length}
+                  totalMaster={personnelList.length}
+                  onOpenFilterSheet={() => setIsFilterSheetOpen(true)}
+                  onResetFilters={resetAllFilters}
+                  onSortPangkatNama={handleSortPangkatNama}
+                  onSortKeteranganApel={handleSortKeteranganApel}
+                  activeSortMode={activeSortMode}
+                  isLightTheme={activeTheme.isLight}
+                />
+
+                {/* Native WhatsApp Mobile Chat List */}
+                <PersonnelChatList
+                  personnelList={filteredPersonnel}
+                  isSelectionMode={isSelectionMode}
+                  selectedIds={selectedIds}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={handleToggleSelectAll}
+                  onCancelSelectionMode={() => {
+                    setIsSelectionMode(false);
+                    setSelectedIds(new Set());
+                  }}
+                  onSelectPerson={(person, index) => {
+                    const realIndex = personnelList.findIndex((p) => p.id === person.id);
+                    setActionSheetTarget({ person, index: realIndex >= 0 ? realIndex : index });
+                  }}
+                />
+              </div>
+            )}
 
           {activeTab === 'ringkasan' && (
             <SummaryTabView
@@ -1369,29 +1403,28 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'database' && (
-            <DatabaseTabView
-              personnelList={personnelList}
-              patentCategories={patentCategories}
-              syncedPresets={syncedApelPresets}
-              onApplyDatabaseToApel={handleResetAllToPaten}
-              onUpdatePersonnelPaten={handleUpdatePersonnelPaten}
-              onUpdatePersonnelName={handleUpdatePersonnelName}
-              onUpdatePersonnelPangkat={handleUpdatePersonnelPangkat}
-              onDeletePersonnel={handleDeletePersonnel}
-              onOpenAddPersonnel={() => {
-                setPersonnelToEdit(null);
-                setIsPersonnelModalOpen(true);
-              }}
-              onOpenGoogleSheetsModal={() => {
-                if (isAdmin) setIsGoogleSheetsModalOpen(true);
-              }}
-              isAdmin={isAdmin}
-              autoSyncEnabled={autoSyncEnabled}
-              isGoogleConnected={!!googleUser}
-            />
-          )}
-        </main>
+            {activeTab === 'database' && (
+              <DatabaseTabView
+                personnelList={personnelList}
+                patentCategories={patentCategories}
+                syncedPresets={syncedApelPresets}
+                onApplyDatabaseToApel={handleResetAllToPaten}
+                onUpdatePersonnelPaten={handleUpdatePersonnelPaten}
+                onUpdatePersonnelName={handleUpdatePersonnelName}
+                onUpdatePersonnelPangkat={handleUpdatePersonnelPangkat}
+                onDeletePersonnel={handleDeletePersonnel}
+                onOpenAddPersonnel={() => {
+                  setPersonnelToEdit(null);
+                  setIsPersonnelModalOpen(true);
+                }}
+                onOpenGoogleSheetsModal={() => setIsGoogleSheetsModalOpen(true)}
+                isAdmin={isAdmin}
+                autoSyncEnabled={autoSyncEnabled}
+                isGoogleConnected={!!googleUser}
+              />
+            )}
+          </main>
+        </div>
 
         {/* WhatsApp-style Floating Action Button (FAB) */}
         {isSelectionMode && selectedIds.size > 0 ? (
@@ -1401,7 +1434,7 @@ export default function App() {
               setQuickMoveTarget(null);
               setIsQuickMoveOpen(true);
             }}
-            className="absolute bottom-[74px] right-4 z-30 h-14 px-5 rounded-2xl bg-[#00a884] hover:bg-[#00bf96] text-[#0b141a] font-bold text-[14px] shadow-xl flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
+            className="absolute bottom-[92px] right-4 z-30 h-14 px-5 rounded-2xl bg-[var(--wa-accent)] text-[var(--wa-accent-text)] hover:brightness-110 font-bold text-[14px] shadow-xl flex items-center gap-2 transition-transform active:scale-95 cursor-pointer"
           >
             <ArrowRightLeft className="w-5 h-5" />
             <span>Pindah ({selectedIds.size})</span>
@@ -1412,7 +1445,7 @@ export default function App() {
             onClick={() => setIsExportModalOpen(true)}
             aria-label="Salin Format Laporan Apel"
             title="Format Laporan Apel WhatsApp"
-            className="absolute bottom-[74px] right-4 z-30 w-14 h-14 rounded-2xl bg-[#00a884] hover:bg-[#00bf96] text-[#0b141a] shadow-xl flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
+            className="absolute bottom-[92px] right-4 z-30 w-14 h-14 rounded-2xl bg-[var(--wa-accent)] text-[var(--wa-accent-text)] hover:brightness-110 shadow-xl flex items-center justify-center transition-transform active:scale-95 cursor-pointer"
           >
             <FileText className="w-6 h-6" />
           </button>
@@ -1426,7 +1459,12 @@ export default function App() {
           duplicateCount={summary.duplicates.length}
         />
 
-        <OfflineIndicator />
+        {!isOnline && (
+          <div className="absolute bottom-[92px] left-4 z-30 flex items-center gap-2 rounded-xl bg-amber-500 px-3.5 py-2 text-xs font-bold text-[#0b141a] shadow-xl">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>Mode Offline — Data tersimpan tetap aktif</span>
+          </div>
+        )}
       </div>
 
       {/* Bottom Sheet for Tapped Personnel Row */}
@@ -1513,39 +1551,41 @@ export default function App() {
         isAdmin={isAdmin}
       />
 
-      <UserManagementModal
-        isOpen={isUserManagementOpen}
-        onClose={() => setIsUserManagementOpen(false)}
-        currentUser={currentUser}
-        onUsersUpdated={() => setUsersList(loadUsersFromStorage())}
-        onLogout={handleLogout}
-        onCurrentUserUpdated={(updated) => setCurrentUser(updated)}
+      <AppearanceModal
+        isOpen={isAppearanceModalOpen}
+        onClose={() => setIsAppearanceModalOpen(false)}
+        settings={appearanceSettings}
+        onUpdateSettings={handleUpdateAppearance}
+        onOpenHeaderPhoto={() => setIsHeaderPhotoModalOpen(true)}
+        headerSubtitle={headerSubtitle}
       />
 
-      {isAdmin && (
-        <GoogleSheetsSyncModal
-          isOpen={isGoogleSheetsModalOpen}
-          onClose={() => setIsGoogleSheetsModalOpen(false)}
-          googleUser={googleUser}
-          googleToken={googleToken}
-          onGoogleSignIn={handleGoogleSignIn}
-          onGoogleSignOut={handleGoogleSignOut}
-          personnelList={personnelList}
-          onApplySheetData={handleApplySheetData}
-          savedSheetUrl={savedSheetUrl}
-          onSaveSheetUrl={handleSaveSheetUrl}
-          savedSheetTab={savedSheetTab}
-          onSaveSheetTab={handleSaveSheetTab}
-          autoSyncEnabled={autoSyncEnabled}
-          onToggleAutoSync={handleToggleAutoSync}
-          lastSyncTime={lastSyncTime}
-          isAdmin={isAdmin}
-        />
-      )}
+      <HeaderPhotoModal
+        isOpen={isHeaderPhotoModalOpen}
+        onClose={() => setIsHeaderPhotoModalOpen(false)}
+        photoUrl={headerPhotoUrl}
+        headerSubtitle={headerSubtitle}
+        onSavePhoto={handleSaveHeaderPhoto}
+        onSaveSubtitle={handleSaveHeaderSubtitle}
+      />
 
-      <PWAInstallModal
-        isOpen={isInstallModalOpen}
-        onClose={() => setIsInstallModalOpen(false)}
+      <GoogleSheetsSyncModal
+        isOpen={isGoogleSheetsModalOpen}
+        onClose={() => setIsGoogleSheetsModalOpen(false)}
+        googleUser={googleUser}
+        googleToken={googleToken}
+        onGoogleSignIn={handleGoogleSignIn}
+        onGoogleSignOut={handleGoogleSignOut}
+        personnelList={personnelList}
+        onApplySheetData={handleApplySheetData}
+        savedSheetUrl={savedSheetUrl}
+        onSaveSheetUrl={handleSaveSheetUrl}
+        savedSheetTab={savedSheetTab}
+        onSaveSheetTab={handleSaveSheetTab}
+        autoSyncEnabled={autoSyncEnabled}
+        onToggleAutoSync={handleToggleAutoSync}
+        lastSyncTime={lastSyncTime}
+        isAdmin={isAdmin}
       />
     </div>
   );

@@ -154,3 +154,60 @@ export async function compressProfilePhotoToDataUrl(
     URL.revokeObjectURL(objectUrl);
   }
 }
+
+export function computeScaledDimensions(
+  width: number,
+  height: number,
+  maxWidth = 720,
+  maxHeight = 1280
+): { width: number; height: number } {
+  const safeW = Math.max(1, Math.floor(width));
+  const safeH = Math.max(1, Math.floor(height));
+  const ratio = Math.min(maxWidth / safeW, maxHeight / safeH, 1);
+  return {
+    width: Math.max(1, Math.round(safeW * ratio)),
+    height: Math.max(1, Math.round(safeH * ratio)),
+  };
+}
+
+/**
+ * Compresses any phone wallpaper photo preserving aspect ratio so it renders sharply
+ * inside the mobile viewport while fitting comfortably inside localStorage.
+ */
+export async function compressWallpaperToDataUrl(
+  file: File,
+  maxWidth = 720,
+  maxHeight = 1280,
+  quality = 0.78
+): Promise<string> {
+  const check = validateImageFileMeta(file.type, file.size);
+  if (!check.valid) {
+    throw new Error(check.message || 'File gambar tidak valid.');
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const img = await loadImageElement(objectUrl);
+    const naturalW = img.naturalWidth || img.width;
+    const naturalH = img.naturalHeight || img.height;
+    const { width, height } = computeScaledDimensions(naturalW, naturalH, maxWidth, maxHeight);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Browser tidak mendukung pemrosesan gambar.');
+    }
+
+    ctx.drawImage(img, 0, 0, width, height);
+    const jpegUrl = canvas.toDataURL('image/jpeg', quality);
+    if (jpegUrl && jpegUrl.startsWith('data:image/')) {
+      return jpegUrl;
+    }
+    return canvas.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
